@@ -1,4 +1,4 @@
-﻿unit uBVH;
+unit uBVH;
 {$MODE objfpc}{$H+}
 {$INLINE ON}
 {$modeswitch advancedrecords}
@@ -10,7 +10,7 @@ const
 type
   IntegerArray=array of integer;
 
-  BVHNode=Class
+  BVHNode=class
     root:AABBRecord;
     left,right:BVHNode;
     leaf:integer;

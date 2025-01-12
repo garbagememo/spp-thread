@@ -11,7 +11,7 @@ const
   INF=1e20;
 type
 
-   AABBRecord=Record
+   AABBRecord=record
       Min,Max:Vec3;
       function hit(r:RayRecord;tmin,tmax:real):boolean;
       function new(m0,m1:Vec3):AABBRecord;
