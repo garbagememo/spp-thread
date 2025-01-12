@@ -6,7 +6,7 @@
 ```
  for i:=0 to MaxThread-1 do ThreadAry[i].Start;
   //Startが終わった後にWaitforが別途で無いとマルチスレッドにならない
-  for i:=0 to MaxThread-1 ThreadAry[i].WaitFor;   
+  for i:=0 to MaxThread-1 do ThreadAry[i].WaitFor;   
  ```
  というコードになる。
  * スレッドコードの中でSynchronize（プロシージャ）とするとメインの方に制御が移動する  
