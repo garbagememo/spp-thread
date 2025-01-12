@@ -17,7 +17,7 @@ type
    
   LineArray=array[0..255*255] of rgbColor;
   TMyThread = class(TThread)
-     samps:integer;//render option
+     wide,hight,samps:integer;//render option
      y:integer;
      Line:LineArray;
      rt:TRenderClass;
@@ -30,9 +30,9 @@ type
      x,sx,sy,s:integer;
      r,tColor,temp:Vec3;
   begin
-    while y<rt.cam.h do begin
+    while y<hight do begin
       if y mod 10 =0 then writeln('y=',y);
-      for x := 0 to rt.cam.w - 1 do begin
+      for x := 0 to wide - 1 do begin
         r:=ZeroVec;
         tColor:=ZeroVec;
         for sy := 0 to 1 do begin
@@ -57,7 +57,7 @@ type
      j:integer;
      yAxis:integer;
   begin
-     yAxis:=rt.cam.h-y-1;
+     yAxis:=hight-y-1;
      for j:=0 to rt.cam.w-1 do BMP.SetPixel(j,yAxis,line[j]);
      y:=y+MaxThread;
   end;
@@ -121,6 +121,8 @@ begin
      ThreadAry[i].FreeOnTerminate:=false;//falseにしないとスレッドが休止時の後始末ができない。
      ThreadAry[i].rt:=TRenderClass.Create(sph,cam);
      ThreadAry[i].y:=i;
+     ThreadAry[i].wide:=cam.w;
+     ThreadAry[i].hight:=cam.h;
      ThreadAry[i].samps:=samps;
   end;
   writeln('Setup!');
@@ -132,7 +134,7 @@ begin
   for i:=0 to MaxThread-1 do begin
     ThreadAry[i].WaitFor;
   end;
-   writeln(' ober=');
-   BMP.WritePPM('threadtest.ppm');
+   writeln ('The time is : ',TimeToStr(Time));
+   BMP.WriteBMPFile('threadtest.bmp');
 end.
   
