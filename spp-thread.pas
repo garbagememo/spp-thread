@@ -6,7 +6,7 @@ uses
   {$ifdef unix}
   cthreads,cmem,
   {$endif}
-  SysUtils,Classes,Math,uVect,uScene,uBMP,uBVH,getopts,uSPP;
+  SysUtils,Classes,Math,uVect,uScene,uBMP,uBVH,getopts,uDetector;
 
 const
    MaxThread=8;
@@ -20,7 +20,7 @@ type
      wide,hight,samps:integer;//render option
      y:integer;
      Line:LineArray;
-     rt:TRenderClass;
+     cam:CamRecord;
      procedure Execute; override;
      procedure AddAxis;
   end;
@@ -38,7 +38,7 @@ type
         for sy := 0 to 1 do begin
           for sx := 0 to 1 do begin
             for s := 0 to samps - 1 do begin
-              temp:=rt.Radiance(rt.cam.GetRay(x,y,sx,sy), 0);
+              temp:=radiance(cam.GetRay(x,y,sx,sy), 0);
               temp:= temp/ samps;
               r:= r+temp;
             end;(*samps*)
@@ -52,13 +52,14 @@ type
       Synchronize(@AddAxis);
      end;(*for y*)
   end;
+
   procedure TMyThread.AddAxis;
   var
      j:integer;
      yAxis:integer;
   begin
      yAxis:=hight-y-1;
-     for j:=0 to rt.cam.w-1 do BMP.SetPixel(j,yAxis,line[j]);
+     for j:=0 to wide-1 do BMP.SetPixel(j,yAxis,line[j]);
      y:=y+MaxThread;
   end;
   
@@ -66,12 +67,11 @@ type
 var
   i: integer;
   w,h,samps    : integer;
-  cam:CamRecord;
   camPosition,camDirection : Vec3;
-
   ArgInt:integer;
   FN,ArgFN:string;
   c:char;
+  StarTime:TDateTime;
 var
   ThreadAry:array[0..MaxThread-1] of TMyThread;
 begin
@@ -108,21 +108,23 @@ begin
   InitScene;
   Randomize;
 
-  camPosition.new(50, 52, 295.6);
-  camDirection.new(0, -0.042612, -1);
-  camDirection:=camDirection.norm;
-  cam.new(camPosition, camDirection,w,h );
+  writeln('samps=',samps);
+  writeln('size=',w,'x',h);
+  writeln('output=',FN);
 
-   writeln ('The time is : ',TimeToStr(Time));
-   
+  cam.new(camPosition.new(50, 52, 295.6),camDirection.new(0, -0.042612, -1).norm,w,h );
+
+  writeln ('The time is : ',TimeToStr(Time));
+  StarTime:=Time; 
   BMP.new(cam.w,cam.h);
   for i:=0 to MaxThread-1 do begin
      ThreadAry[i]:=TMyThread.Create(true);
-     ThreadAry[i].FreeOnTerminate:=false;//falseにしないとスレッドが休止時の後始末ができない。
-     ThreadAry[i].rt:=TRenderClass.Create(sph,cam);
+     ThreadAry[i].FreeOnTerminate:=false;
+     //falseにしないとスレッドが休止時の後始末ができない。
      ThreadAry[i].y:=i;
      ThreadAry[i].wide:=cam.w;
      ThreadAry[i].hight:=cam.h;
+     ThreadAry[i].cam:=cam;
      ThreadAry[i].samps:=samps;
   end;
   writeln('Setup!');
@@ -134,7 +136,8 @@ begin
   for i:=0 to MaxThread-1 do begin
     ThreadAry[i].WaitFor;
   end;
-   writeln ('The time is : ',TimeToStr(Time));
-   BMP.WriteBMPFile('threadtest.bmp');
+  writeln('The time is : ',TimeToStr(Time));
+  writeln('Calcurate time is=',TimeToStr(Time-StarTime));
+  BMP.WriteBMPFile('threadtest.bmp');
 end.
   
