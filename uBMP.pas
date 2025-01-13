@@ -6,8 +6,6 @@ uses SysUtils;
 
 const
     MaxArrayNum=1024*1024*2*2;
-    AllocMemSize=1024*1024*3+5120;
-
 type
     rgbColor=record b,g,r:byte; end;
 
@@ -35,7 +33,7 @@ begin
    cmap_entries := 0;
    headersize:=14+40;
    bfsize:=headersize+longint(x*y)*3;
-   bmpBodySize:=bfSize;
+   bmpBodySize:=longint(x*y)*3;
    for i:=0 to 14-1 do bmpfileheader[i]:=0;
    for i:=0 to 40-1 do bmpinfoheader[i]:=0;
 
@@ -98,7 +96,7 @@ begin
    BlockWrite(B,bmpfileheader,14);
    Blockwrite(B,bmpInfoheader,40);
    blockwrite(b,bmpBody,bmpBodySize);
-    Close(b);
+   Close(b);
 end;
 
 procedure BMPRecord.WritePPM(FN:string);

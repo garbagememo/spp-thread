@@ -6,7 +6,7 @@ uses
   {$ifdef unix}
   cthreads,cmem,
   {$endif}
-  SysUtils,Classes,Math,uVect,uScene,uBMP,uBVH,getopts,uDetector;
+  SysUtils,Classes,Math,uVect,uBMP,getopts,uDetector;
 
 const
    MaxThread=8;
@@ -15,36 +15,34 @@ var
 
 type
    
-  LineArray=array[0..255*255] of rgbColor;
-  TMyThread = class(TThread)
-     wide,hight,samps:integer;//render option
-     y:integer;
-     Line:LineArray;
-     cam:CamRecord;
-     procedure Execute; override;
-     procedure AddAxis;
-  end;
+   //スタックサイズが不定を嫌ってdynamic arrayは使わない
+   LineArray=array[0..255*255] of rgbColor;
+
+   TMyThread = class(TThread)
+      wide,hight,samps:integer;//render option
+      y:integer;
+      Line:LineArray;
+      cam:CamRecord;
+      procedure Execute; override;
+      procedure AddAxis;
+   end;
   
   procedure TMyThread.Execute;
   var
      x,sx,sy,s:integer;
-     r,tColor,temp:Vec3;
+     r,tColor:Vec3;
   begin
     while y<hight do begin
       if y mod 10 =0 then writeln('y=',y);
       for x := 0 to wide - 1 do begin
-        r:=ZeroVec;
         tColor:=ZeroVec;
         for sy := 0 to 1 do begin
           for sx := 0 to 1 do begin
-            for s := 0 to samps - 1 do begin
-              temp:=radiance(cam.GetRay(x,y,sx,sy), 0);
-              temp:= temp/ samps;
-              r:= r+temp;
-            end;(*samps*)
-            temp:= ClampVector(r)* 0.25;
-            tColor:=tColor+ temp;
-            r:=ZeroVec;
+             r:=ZeroVec;
+             for s := 0 to samps - 1 do begin
+               r:= r+radiance(cam.GetRay(x,y,sx,sy), 0)/ samps;
+             end;(*samps*)
+             tColor:=tColor+ ClampVector(r)* 0.25;
           end;(*sx*)
         end;(*sy*)
         Line[x]:=ColToRGB(tColor);
@@ -66,7 +64,7 @@ type
   
 var
   i: integer;
-  w,h,samps    : integer;
+  modelnum,w,h,samps: integer;
   camPosition,camDirection : Vec3;
   ArgInt:integer;
   FN,ArgFN:string;
@@ -78,9 +76,9 @@ begin
   FN:='temp.bmp';
   w:=640 ;h:=480;  samps := 16;
   c:=#0;
+  modelnum:=0;
   repeat
-    c:=getopt('o:s:w:');
-
+    c:=getopt('m:o:s:w:');
     case c of
       'o' : begin
          ArgFN:=OptArg;
@@ -97,20 +95,38 @@ begin
          w:=ArgInt;h:=w *3 div 4;
          writeln('w=',w,' ,h=',h);
       end;
+      'm' : begin
+         ArgInt:=StrToInt(OptArg);
+         modelnum:=ArgInt;
+         writeln('model-number=',modelnum);
+      end;
       '?',':' : begin
          writeln(' -o [finename] output filename');
          writeln(' -s [samps] sampling count');
          writeln(' -w [width] screen width pixel');
+         writeln(' -m [id] scene model number 0..4');
       end;
     end; { case }
   until c=endofoptions;
+ 
   BMP.new(w,h);
-  InitScene;
-  Randomize;
 
   writeln('samps=',samps);
   writeln('size=',w,'x',h);
+  writeln('modele number=',modelnum);
   writeln('output=',FN);
+
+  Randomize;
+  case modelnum of
+    0:initScene;
+    1:initNEScene;
+    2:SkyScene;
+    3:ForestScene;
+    4:wadaScene;
+    else begin
+      initScene;
+    end;
+  end;(*case*)
 
   cam.new(camPosition.new(50, 52, 295.6),camDirection.new(0, -0.042612, -1).norm,w,h );
 
