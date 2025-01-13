@@ -40,7 +40,7 @@ begin
   o:=o_;d:=d_;w:=w_;h:=h_;samps:=samps_;
   cx.new(w * 0.5135 / h, 0, 0);
   cy:= (cx/ d).norm* 0.5135;
-
+  PlaneDist:=140;
   result:=self;
 
 end;
@@ -64,7 +64,7 @@ begin
       +cx* (((sx + 0.5 + dx) / 2 + x) / w - 0.5)
       +d;
    dirct:=dirct.norm;
-   result.o:= dirct* 140+o;
+   result.o:= dirct* PlaneDist+o;
    result.d := dirct;
 end;
   
@@ -151,7 +151,7 @@ begin
          writeln('w=',w,' ,h=',h);
       end;
       '?',':' : begin
-         writeln(' -m [0..4] scene number');
+         writeln(' -m [0..5] scene number');
          writeln(' -o [finename] output filename');
          writeln(' -s [samps] sampling count');
          writeln(' -t [thread num]');
@@ -168,7 +168,14 @@ begin
   writeln('output=',FN);
   BMP.new(w,h);
   Randomize;
+  cam.new(camPosition.new(50, 52, 295.6),camDirection.new(0, -0.042612, -1).norm,w,h,samps );
   case modelnum of
+     5:begin
+          RandomScene;
+          cam.o.new(55, 40, 295.6);
+          cam.d.new(0, -0.12, -1.0).norm;
+          cam.PlaneDist:=70;
+       end;
      4:WadaScene;
      3:ForestScene;
      2:SkyScene;
@@ -177,9 +184,6 @@ begin
         InitScene;
      end;
   end;(*case*)
-     
-  cam.new(camPosition.new(50, 52, 295.6),camDirection.new(0, -0.042612, -1).norm,w,h,samps );
-
   writeln ('The time is : ',TimeToStr(Time));
   StarTime:=Time; 
   BMP.new(cam.w,cam.h);
