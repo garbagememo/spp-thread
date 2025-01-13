@@ -156,6 +156,7 @@ begin
          writeln(' -s [samps] sampling count');
          writeln(' -t [thread num]');
          writeln(' -w [width] screen width pixel');
+         halt;
       end;
     end; { case }
   until c=endofoptions;
