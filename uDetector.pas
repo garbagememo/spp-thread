@@ -10,21 +10,6 @@ const
   eps=1e-4;
   INF=1e20;
 type
-
-  InterRecord=record
-     isHit:boolean;
-     t:real;
-     id:integer;
-  end;
-
-   CamRecord=record
-      o,d:Vec3;
-      PlaneDist:real;
-      w,h:integer;
-      cx,cy:Vec3;
-      function new(o_,d_:Vec3;w_,h_:integer):CamRecord;
-      function GetRay(x,y,sx,sy:integer):RayRecord;
-   end;
    
   SphereClass=class
     rad:real;       //radius
@@ -39,7 +24,6 @@ function radiance(const r:RayRecord;depth:integer):Vec3;
 
 var
    sph:TList;
-   cam:CamRecord;
 
 procedure InitScene;
 procedure InitNEScene;
@@ -50,39 +34,6 @@ procedure WadaScene;
 
 
 implementation
-
-function CamRecord.new(o_,d_:Vec3;w_,h_:integer):CamRecord;
-begin
-  o:=o_;d:=d_;w:=w_;h:=h_;
-  cx.new(w * 0.5135 / h, 0, 0);
-  cy:= (cx/ d).norm* 0.5135;
-
-  result:=self;
-
-end;
-
-function CamRecord.GetRay(x,y,sx,sy:integer):RayRecord;
-var
-   r1,r2,dx,dy,temp:real;
-   dirct:Vec3;
-begin
-   r1 := 2 * random;
-   if (r1 < 1) then
-      dx := sqrt(r1) - 1
-   else
-      dx := 1 - sqrt(2 - r1);
-   r2 := 2 * random;
-   if (r2 < 1) then
-      dy := sqrt(r2) - 1
-   else
-      dy := 1 - sqrt(2 - r2);
-   dirct:= cy* (((sy + 0.5 + dy) / 2 + (h - y - 1)) / h - 0.5)
-      +cx* (((sx + 0.5 + dx) / 2 + x) / w - 0.5)
-      +d;
-   dirct:=dirct.norm;
-   result.o:= dirct* 140+o;
-   result.d := dirct;
-end;
 
 constructor SphereClass.Create(rad_:real;p_,e_,c_:Vec3;refl_:RefType);
 begin
