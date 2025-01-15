@@ -80,7 +80,7 @@ end;
           for sx := 0 to 1 do begin
              r:=ZeroVec;
              for s := 0 to cam.samps - 1 do begin
-               r:= r+radiance(cam.GetRay(x,y,sx,sy), 0)/ cam.samps;
+               r:= r+radiance_bvh(cam.GetRay(x,y,sx,sy), 0)/ cam.samps;
              end;(*samps*)
              tColor:=tColor+ ClampVector(r)* 0.25;
           end;(*sx*)
@@ -113,7 +113,7 @@ var
   c:char;
   StarTime:TDateTime;
 var
-   ary:IntegerAry;
+  ary:IntegerArray;
   ThreadAry:array[0..MaxThread-1] of TMyThread;
 begin
    ThreadNum:=8;
@@ -185,9 +185,9 @@ begin
      end;
   end;(*case*)
 
-  SetString(ary,sph.count);
+  SetLength(ary,sph.count);
   for i:=0 to sph.count-1 do ary[i]:=i;
-
+  BVH:=BVHNode.Create(ary,sph);
   
   writeln ('The time is : ',TimeToStr(Time));
   StarTime:=Time; 

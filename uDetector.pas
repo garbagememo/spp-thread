@@ -10,11 +10,18 @@ const
   eps=1e-4;
   INF=1e20;
 type
+   AABBRecord=record
+      Min,Max:Vec3;
+      function hit(r:RayRecord;tmin,tmax:real):boolean;
+      function new(m0,m1:Vec3):AABBRecord;
+      function MargeBoundBox(box1:AABBRecord):AABBRecord;
+   end;
    
   SphereClass=class
     rad:real;       //radius
     p,e,c:Vec3;// position. emission,color
     refl:RefType;
+    BoundBox:AABBRecord;
     constructor Create(rad_:real;p_,e_,c_:Vec3;refl_:RefType);
     function intersect(const r:RayRecord):real;
   end;
@@ -35,10 +42,72 @@ procedure RandomScene;
 
 
 implementation
+function AABBRecord.MargeBoundBox(box1:AABBRecord):AABBRecord;
+var
+   small,big:Vec3;
+begin
+  small.new(math.min(self.min.x, box1.min.x),
+            math.min(self.min.y, box1.min.y),
+            math.min(self.min.z, box1.min.z));
+
+  big.new(math.max(self.max.x, box1.max.x),
+          math.max(self.max.y, box1.max.y),
+          math.max(self.max.z, box1.max.z) );
+
+  result.new(small,big);
+end;
+
+
+function AABBRecord.new(m0,m1:Vec3):AABBRecord;
+begin
+   min:=m0;max:=m1;
+   result:=self;
+end;
+
+function AABBRecord.hit(r:RayRecord;tmin,tmax:real):boolean;
+var
+  invD,t0,t1,tswap:real;
+begin
+   //tminがマイナスの場合を除外するため、tmin=EPS,tmax=INFとしている。引数意味なくない？
+   invD := 1.0 / r.d.x;
+   t0 := (Min.x - r.o.x) * invD;
+    t1 := (max.x - r.o.x) * invD;
+    if (invD < 0.0) then begin tswap:=t1;t1:=t0;t0:=tswap end;
+
+    if t0>tmin then tmin:=t0;
+    if t1<tmax then tmax:=t1;
+    if (tmax <= tmin) then exit(false);
+
+    invD := 1.0 / r.d.y;
+    t0 := (Min.y - r.o.y) * invD;
+    t1 := (max.y - r.o.y) * invD;
+    if (invD < 0.0) then begin tswap:=t1;t1:=t0;t0:=tswap end;
+
+    if t0>tmin then tmin:=t0;
+    if t1<tmax then tmax:=t1;
+    if (tmax <= tmin) then exit(false);
+
+    invD := 1.0 / r.d.z;
+    t0 := (Min.z - r.o.z) * invD;
+    t1 := (max.z - r.o.z) * invD;
+    if (invD < 0.0) then begin tswap:=t1;t1:=t0;t0:=tswap end;
+
+    if t0>tmin then tmin:=t0;
+    if t1<tmax then tmax:=t1;
+    if (tmax <= tmin) then exit(false);
+
+    result:=true;
+end;
+
+
 
 constructor SphereClass.Create(rad_:real;p_,e_,c_:Vec3;refl_:RefType);
+var
+   b:Vec3;
 begin
-  rad:=rad_;p:=p_;e:=e_;c:=c_;refl:=refl_;
+   rad:=rad_;p:=p_;e:=e_;c:=c_;refl:=refl_;
+   BoundBox.new(p - b.new(rad, rad, rad),
+                p + b.new(rad, rad, rad));
 end;
 function SphereClass.intersect(const r:RayRecord):real;
 var
