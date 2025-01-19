@@ -113,7 +113,7 @@ var
   c:char;
   StarTime:TDateTime;
 var
-   ary:IntegerAry;
+   ary:IntegerArray;
   ThreadAry:array[0..MaxThread-1] of TMyThread;
 begin
    ThreadNum:=8;
@@ -184,9 +184,6 @@ begin
         InitScene;
      end;
   end;(*case*)
-
-  SetString(ary,sph.count);
-  for i:=0 to sph.count-1 do ary[i]:=i;
 
   
   writeln ('The time is : ',TimeToStr(Time));
