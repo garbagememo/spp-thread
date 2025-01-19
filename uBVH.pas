@@ -10,19 +10,16 @@ const
 type
   IntegerArray=array of integer;
 
-  BVHNode=class
+  BVHNodeClass=class
     root:AABBRecord;
-    left,right:BVHNode;
+    left,right:BVHNodeClass;
     leaf:integer;
     constructor Create(ary:IntegerArray;sph:TList);
     function intersect(r:RayRecord):InterRecord;
+    function radiance(const r:RayRecord;depth:integer):Vec3;
   end;
 
-var
-  BVH:BVHNode; 
-  
 procedure AABBSort(var a: array of integer);//バブルソート
-function radiance_bvh(const r:RayRecord;depth:integer):Vec3;
 
    
 implementation
@@ -55,7 +52,7 @@ begin
   end;
 end;
 
-constructor BVHnode.Create(ary:IntegerArray;sph:TList);
+constructor BVHNodeClass.Create(ary:IntegerArray;sph:TList);
 var
    upAry,DownAry:IntegerArray;
    i,len:integer;
@@ -72,8 +69,8 @@ begin
        SetLength(downAry,1);
        upAry[0]:=Ary[0];
        DownAry[0]:=Ary[1];
-       Left:=BVHNode.Create(upAry,sph);
-       right:=BVHNode.Create(DownAry,sph);
+       Left:=BVHNodeClass.Create(upAry,sph);
+       right:=BVHNodeClass.Create(DownAry,sph);
     end;
     else begin
       for i:=1 to high(ary)  do begin
@@ -83,13 +80,13 @@ begin
       upAry:=Copy(Ary,0,len);
       DownAry:=Copy(Ary,len,length(Ary)-len);
        
-      Left:=BVHNode.Create(UpAry,sph);
-      right:=BVHNode.Create(DownAry,sph);
+      Left:=BVHNodeClass.Create(UpAry,sph);
+      right:=BVHNodeClass.Create(DownAry,sph);
     end;
   end;
 end;
 
-function BVHnode.intersect(r:RayRecord):InterRecord;
+function BVHNodeClass.intersect(r:RayRecord):InterRecord;
 var
    RIR,LIR:InterRecord;
    t:real;
@@ -125,7 +122,7 @@ begin
   end;
 end;
 
-function radiance_bvh(const r:RayRecord;depth:integer):Vec3;
+function BVHNodeClass.radiance(const r:RayRecord;depth:integer):Vec3;
 var
   id:integer;
   obj:SphereClass;
@@ -138,7 +135,7 @@ var
   ir:InterRecord;
 begin
    id:=0;depth:=depth+1;
-   ir:=BVH.intersect(r);
+   ir:=self.intersect(r);
   if ir.isHit=false then begin
     result:=ZeroVec;exit;
   end;
@@ -170,10 +167,10 @@ begin
       end;
       v:=w/u;
       d := (u*cos(r1)*r2s + v*sin(r1)*r2s + w*sqrt(1-r2)).norm;
-      result:=obj.e+f.Mult(radiance_bvh(ray2.new(x,d),depth) );
+      result:=obj.e+f.Mult(radiance(ray2.new(x,d),depth) );
     end;(*DIFF*)
     SPEC:begin
-      result:=obj.e+f.mult(radiance_bvh(ray2.new(x,r.d-n*2*(n*r.d) ),depth));
+      result:=obj.e+f.mult(radiance(ray2.new(x,r.d-n*2*(n*r.d) ),depth));
     end;(*SPEC*)
     REFR:begin
       RefRay.new(x,r.d-n*2*(n*r.d) );
@@ -181,7 +178,7 @@ begin
       nc:=1;nt:=1.5; if into then nnt:=nc/nt else nnt:=nt/nc; ddn:=r.d*nl; 
       cos2t:=1-nnt*nnt*(1-ddn*ddn);
       if cos2t<0 then begin   // Total internal reflection
-        result:=obj.e + f.mult(radiance_bvh(RefRay,depth));
+        result:=obj.e + f.mult(radiance(RefRay,depth));
         exit;
       end;
       if into then q:=1 else q:=-1;
@@ -191,12 +188,12 @@ begin
       Re:=R0+(1-R0)*c*c*c*c*c;Tr:=1-Re;P:=0.25+0.5*Re;RP:=Re/P;TP:=Tr/(1-P);
       if depth>2 then begin
         if random<p then // 反射
-          result:=obj.e+f.mult(radiance_bvh(RefRay,depth)*RP)
+          result:=obj.e+f.mult(radiance(RefRay,depth)*RP)
         else //屈折
-          result:=obj.e+f.mult(radiance_bvh(ray2.new(x,tdir),depth)*TP);
+          result:=obj.e+f.mult(radiance(ray2.new(x,tdir),depth)*TP);
       end
       else begin// 屈折と反射の両方を追跡
-        result:=obj.e+f.mult(radiance_bvh(RefRay,depth)*Re+radiance_bvh(ray2.new(x,tdir),depth)*Tr);
+        result:=obj.e+f.mult(radiance(RefRay,depth)*Re+radiance(ray2.new(x,tdir),depth)*Tr);
       end;
     end;(*REFR*)
   end;(*CASE*)

@@ -31,6 +31,7 @@ type
       y,yInc:integer;
       Line:LineArray;
       cam:CamRecord;
+      BVH:BVHNodeClass;
       procedure Execute; override;
       procedure AddAxis;
    end;
@@ -80,7 +81,7 @@ end;
           for sx := 0 to 1 do begin
              r:=ZeroVec;
              for s := 0 to cam.samps - 1 do begin
-               r:= r+radiance_bvh(cam.GetRay(x,y,sx,sy), 0)/ cam.samps;
+               r:= r+BVH.radiance(cam.GetRay(x,y,sx,sy), 0)/ cam.samps;
              end;(*samps*)
              tColor:=tColor+ ClampVector(r)* 0.25;
           end;(*sx*)
@@ -114,6 +115,7 @@ var
   StarTime:TDateTime;
 var
   ary:IntegerArray;
+  BVH:BVHNodeClass;
   ThreadAry:array[0..MaxThread-1] of TMyThread;
 begin
    ThreadNum:=8;
@@ -187,7 +189,7 @@ begin
 
   SetLength(ary,sph.count);
   for i:=0 to sph.count-1 do ary[i]:=i;
-  BVH:=BVHNode.Create(ary,sph);
+  BVH:=BVHNodeClass.Create(ary,sph);
   
   writeln ('The time is : ',TimeToStr(Time));
   StarTime:=Time; 
@@ -201,6 +203,7 @@ begin
      ThreadAry[i].hight:=cam.h;
      ThreadAry[i].cam:=cam;
      ThreadAry[i].samps:=samps;
+     ThreadAry[i].BVH:=BVH;
      ThreadAry[i].yInc:=ThreadNum;
   end;
   writeln('Setup!');
