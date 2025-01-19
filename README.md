@@ -25,5 +25,5 @@ I guess that's the trick.
   for i:=0 to MaxThread-1 do ThreadAry[i].WaitFor;   
  ```
  というコードになる。
- * スレッドコードの中でSynchronize（プロシージャ）とするとメインの方に制御が移動する
+ * スレッドコードの中でSynchronize（プロシージャ）とするとメインの方に制御が移動する  
 もコツと言えるでしょう。
