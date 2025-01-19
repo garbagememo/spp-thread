@@ -23,7 +23,6 @@ type
     BVH:BVHNodeClass;
     constructor Create(o:Vec3);
     function intersect(r:RayRecord):InterRecord;
-    function radiance(const r:RayRecord;depth:integer):Vec3;
   end;
 
 procedure AABBSort(var a: array of integer);
@@ -134,7 +133,8 @@ var
   i,j,k,l:integer;
   s:SphereClass;
 begin
-  SetLength(ary,sph.count);SetLength(NoBVHary,sph.count);
+  SetLength(ary,sph.count);
+  SetLength(NoBVHary,sph.count);
   for i:=0 to sph.count-1 do begin ary[i]:=-1;NoBVHary[i]:=-1;end;
   j:=-1;k:=-1;
   for i:=0 to sph.count-1 do begin
@@ -146,10 +146,7 @@ begin
       k:=k+1;ary[k]:=i;
     end;
   end;
-  writeln('j=',j,' k=',k);
   SetLength(NoBVHary,j+1);SetLength(ary,k+1);
-  for i:=0 to length(NoBVHary)-1 do writeln(' NoBVHary[',i,']=',NoBVHary[i]);
-  for i:=0 to length(ary)-1 do writeln(' ary[',i,']=',ary[i]);
   BVH:=BVHNodeClass.Create(ary,sph);
 end;
 
@@ -169,83 +166,6 @@ begin
     end;
   end;
   result:=ir;
-end;
-
-function HybridBVHClass.radiance(const r:RayRecord;depth:integer):Vec3;
-var
-  id:integer;
-  obj:SphereClass;
-  x,n,f,nl,u,v,w,d:Vec3;
-  p,r1,r2,r2s,t:real;
-  into:boolean;
-  ray2,RefRay:RayRecord;
-  nc,nt,nnt,ddn,cos2t,q,a,b,c,R0,Re,RP,Tr,TP:real;
-  tDir:Vec3;
-  ir:InterRecord;
-begin
-  ir.id:=0;depth:=depth+1;
-  ir:=self.intersect(r);
-  if ir.isHit=false then begin
-    result:=ZeroVec;exit;
-  end;
-  obj:=SphereClass(sph[ir.id]);
-  x:=r.o+r.d*ir.t; n:=(x-obj.p).norm; f:=obj.c;
-  if n.dot(r.d)<0 then nl:=n else nl:=n*-1;
-  if (f.x>f.y)and(f.x>f.z) then
-    p:=f.x
-  else if f.y>f.z then 
-    p:=f.y
-  else
-    p:=f.z;
-   if (depth>5) then begin
-    if random<p then 
-      f:=f/p 
-    else begin
-      result:=obj.e;
-      exit;
-    end;
-  end;
-  case obj.refl of
-    DIFF:begin
-      r1:=2*PI*random;r2:=random;r2s:=sqrt(r2);
-      w:=nl;
-      if abs(w.x)>0.1 then
-        u:=(u.new(0,1,0)/w).norm 
-      else begin
-        u:=(u.new(1,0,0)/w ).norm;
-      end;
-      v:=w/u;
-      d := (u*cos(r1)*r2s + v*sin(r1)*r2s + w*sqrt(1-r2)).norm;
-      result:=obj.e+f.Mult(radiance(ray2.new(x,d),depth) );
-    end;(*DIFF*)
-    SPEC:begin
-      result:=obj.e+f.Mult((radiance(ray2.new(x,r.d-n*2*(n*r.d) ),depth)));
-    end;(*SPEC*)
-    REFR:begin
-      RefRay.new(x,r.d-n*2*(n*r.d) );
-      into:= (n*nl>0);
-      nc:=1;nt:=1.5; if into then nnt:=nc/nt else nnt:=nt/nc; ddn:=r.d*nl; 
-      cos2t:=1-nnt*nnt*(1-ddn*ddn);
-      if cos2t<0 then begin   // Total internal reflection
-        result:=obj.e + f.Mult(radiance(RefRay,depth));
-        exit;
-      end;
-      if into then q:=1 else q:=-1;
-      tdir := (r.d*nnt - n*(q*(ddn*nnt+sqrt(cos2t)))).norm;
-      if into then Q:=-ddn else Q:=tdir*n;
-      a:=nt-nc; b:=nt+nc; R0:=a*a/(b*b); c := 1-Q;
-      Re:=R0+(1-R0)*c*c*c*c*c;Tr:=1-Re;P:=0.25+0.5*Re;RP:=Re/P;TP:=Tr/(1-P);
-      if depth>2 then begin
-        if random<p then // 反射
-          result:=obj.e+f.Mult(radiance(RefRay,depth)*RP)
-        else //屈折
-          result:=obj.e+f.Mult(radiance(ray2.new(x,tdir),depth)*TP);
-      end
-      else begin// 屈折と反射の両方を追跡
-        result:=obj.e+f.Mult(radiance(RefRay,depth)*Re+radiance(ray2.new(x,tdir),depth)*Tr);
-      end;
-    end;(*REFR*)
-  end;(*CASE*)
 end;
 
 begin
