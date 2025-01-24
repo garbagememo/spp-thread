@@ -293,6 +293,11 @@ begin
   end;
   writeln('The time is : ',TimeToStr(Time));
   writeln('Calcurate time is=',TimeToStr(Time-StarTime));
-  if UpperCase(ExtractFileExt(FN))='.BMP' then  BMP.WriteBMPFile(FN) else BMP.WritePPM(FN);
+  if UpperCase(ExtractFileExt(FN))='.BMP' then
+    BMP.WriteBMPFile(FN)
+  else if UpperCase(ExtractFileExt(FN))='.PNG' then
+    BMP.WritePNG(FN)
+  else
+    BMP.WritePPM(FN);
 end.
   
