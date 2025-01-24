@@ -121,14 +121,17 @@ end;
 procedure BMPRecord.WritePNG(FN:string);
 var
     image : TFPCustomImage;
-    writer : TFPCustomImageWriter;
+    writer : TFPWriterPNG;
     x,y:integer;
 begin
   image := TFPMemoryImage.Create (bmpWidth,bmpHeight);
   Writer := TFPWriterPNG.Create;
+  Writer.WordSized:=false;
   for y:=0 to bmpHeight-1 do
     for x:=0 to bmpWidth-1 do 
-       image.colors[x,bmpHeight-y-1]:=FPColor(bmpBody[(y*bmpWidth+x)*3+2]*255,bmpBody[(y*bmpWidth+x)*3+1]*255,bmpBody[(y*bmpWidth+x)*3]*255);
+      image.colors[x,bmpHeight-y-1]:=FPColor(bmpBody[(y*bmpWidth+x)*3+2]*255,
+                                             bmpBody[(y*bmpWidth+x)*3+1]*255,
+                                             bmpBody[(y*bmpWidth+x)*3  ]*255);
   image.SaveToFile (FN, writer);
   image.Free;
   writer.Free;
